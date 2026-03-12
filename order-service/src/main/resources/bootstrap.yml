@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: order-service
+  cloud:
+    config:
+      # 1. 告诉服务去哪里找配置中心
+      uri: http://config-server:8888
+      # 2. 如果连不上配置中心，直接报错停止启动（防止因缺少数据库配置而崩溃）
+      fail-fast: true
+      # 3. 如果 Config Server 还没起好，重试几次
+      retry:
+        initial-interval: 2000
+        max-attempts: 5

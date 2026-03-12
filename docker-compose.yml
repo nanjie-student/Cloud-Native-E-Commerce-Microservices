@@ -1,4 +1,25 @@
 services:
+  # --- 1. 添加数据库服务 ---
+  postgres-product:
+    image: postgres:15
+    container_name: postgres-product
+    environment:
+      - POSTGRES_DB=product_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password123
+    ports:
+      - "5432:5432"
+  #2---order 数据库----
+  postgres-order:
+    image: postgres:15
+    container_name: postgres-order
+    environment:
+      - POSTGRES_DB=order_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password123
+    ports:
+      - "5433:5432" # 注意：宿主机端口改到 5433，避免和 product 的 5432 冲突
+
   discovery-server:
     image: discovery-server:v1
     container_name: discovery-server
@@ -10,8 +31,14 @@ services:
     container_name: config-server
     ports:
       - "8888:8888"
+    volumes:
+      #这一行是关键：[宿主机路径]:[容器内路径]
+      - ./config-server/src/main/resources/shared-configs:/config
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+       #告诉 Spring 去容器内的 /config 文件夹找文件
+      - SPRING_PROFILES_ACTIVE=native
+      - SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS=file:/config/
     depends_on:
       - discovery-server
 
@@ -33,3 +60,20 @@ services:
     depends_on:
       - discovery-server
       - config-server
+      - postgres-product
+
+  order-service:
+    image: order-service:v1
+    container_name: order-service
+    ports:
+      - "8082:8082"
+    environment:
+      #- SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-order:5432/order_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+      - config-server
+      - postgres-order
