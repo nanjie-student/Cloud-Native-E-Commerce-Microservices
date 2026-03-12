@@ -5,7 +5,10 @@ spring:
   application:
     name: product-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/product_db
+    #本地环境
+    #url: jdbc:postgresql://localhost:5432/product_db
+    #docker 容器化环境
+    url: jdbc:postgresql://postgres-product:5432/product_db
     username: postgres
     password: password123
   jpa:
@@ -16,4 +19,29 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      #defaultZone: http://localhost:8761/eureka/
+      # 将 localhost 改为 discovery-server (你的容器名)
+      defaultZone: http://discovery-server:8761/eureka/
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10          # 统计最后 10 次请求
+        failureRateThreshold: 50       # 失败率超过 50% 就熔断
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3 # 半开状态下允许通过几次请求来测试恢复
+        minimumNumberOfCalls: 5
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true      # 显式开启熔断器的健康检查
+  endpoints:
+    web:
+      exposure:
+        include: "*"     # 暴露所有端点，这样你才能看到 /actuator/health 以外的
+  endpoint:
+    health:
+      show-details: always # 始终显示详细信息，否则你看不到失败率

@@ -1,0 +1,35 @@
+services:
+  discovery-server:
+    image: discovery-server:v1
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+
+  config-server:
+    image: config-server:v1
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+
+  product-service:
+    image: product-service:v1
+    container_name: product-service
+    ports:
+      - "8081:8081"
+    environment:
+      # 1. 统一使用下划线格式（更稳定）
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-product:5432/product_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      # 2. 强制指定方言，跳过元数据检测
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      # 3. 告诉它配置中心在哪
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+      - config-server
