@@ -3,11 +3,21 @@ spring:
     name: product-service
   cloud:
     config:
+      enabled: false
+  # 注意：datasource 前面必须只有 2 个空格！
+  datasource:
+    url: jdbc:postgresql://localhost:5432/product_db
+    username: postgres
+    password: password123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
       # 1. 告诉服务去哪里找配置中心
-      uri: http://config-server:8888
+      # uri: http://config-server:8888
       # 2. 如果连不上配置中心，直接报错停止启动（防止因缺少数据库配置而崩溃）
-      fail-fast: true
+      #fail-fast: true
       # 3. 如果 Config Server 还没起好，重试几次
-      retry:
-        initial-interval: 2000
-        max-attempts: 3
+#      retry:
+#        initial-interval: 2000
+#        max-attempts: 3
