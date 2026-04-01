@@ -7,7 +7,7 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # 将 target 目录下的 jar 包拷贝到镜像里的 app.jar
-COPY target/product-service-0.0.1-SNAPSHOT.jar app.jar
+COPY target/product-service.jar app.jar
 
 # 容器启动时执行的命令
 ENTRYPOINT ["java", "-jar", "app.jar"]
